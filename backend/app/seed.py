@@ -41,6 +41,17 @@ PRODUTOS = [
     ("Resma de papel A4", "Papelaria", 22.90, 10),
 ]
 
+# Fornecedor "principal" de cada categoria, associado pelo nome (não pela
+# posição nas listas CATEGORIAS/FORNECEDORES) — evita que uma futura edição
+# desalinhada de uma das duas listas quebre o mapeamento ou derrube o
+# startup da aplicação.
+FORNECEDOR_PRINCIPAL_POR_CATEGORIA = {
+    "Eletrônicos": "TechDistribuidora Ltda",
+    "Alimentos": "Alimentos Bom Sabor",
+    "Limpeza": "Limpa Tudo Suprimentos",
+    "Papelaria": "Papelaria Central",
+}
+
 # Produtos que, além do fornecedor "principal" da própria categoria, também
 # são fornecidos por um segundo fornecedor — demonstra a relação N:N de
 # verdade na demo (distribuidores menores costumam atender mais de uma
@@ -49,11 +60,6 @@ VINCULOS_EXTRAS = {
     "Mouse sem fio": ["Papelaria Central"],
     "Café 500g": ["Limpa Tudo Suprimentos"],
 }
-
-
-def _fornecedor_da_categoria(nome_categoria: str) -> int:
-    """Retorna o índice (1-based) do fornecedor associado à categoria."""
-    return CATEGORIAS.index(nome_categoria) + 1
 
 
 def seed_data() -> None:
@@ -90,11 +96,11 @@ def seed_data() -> None:
             session.add(produto)
             session.flush()
 
-            indice_fornecedor = _fornecedor_da_categoria(categoria_nome)
+            nome_fornecedor_principal = FORNECEDOR_PRINCIPAL_POR_CATEGORIA[categoria_nome]
             session.add(
                 ProdutoFornecedor(
                     produto_id=produto.id,
-                    fornecedor_id=fornecedores_db[indice_fornecedor - 1].id,
+                    fornecedor_id=fornecedores_por_nome[nome_fornecedor_principal].id,
                 )
             )
 

@@ -12,3 +12,7 @@ class Produto(SQLModel, table=True):
     categoria_id: int = Field(foreign_key="categorias.id")
     quantidade_estoque: int = Field(default=0)
     estoque_minimo: int = Field(default=10)
+
+    @property
+    def esta_com_baixo_estoque(self) -> bool:
+        return self.quantidade_estoque < self.estoque_minimo

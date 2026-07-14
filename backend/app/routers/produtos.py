@@ -78,9 +78,7 @@ def listar_produtos(
 @router.get("/baixo-estoque", response_model=list[ProdutoLeitura])
 def listar_produtos_baixo_estoque(session: Session = Depends(get_session)):
     produtos = session.exec(select(Produto)).all()
-    produtos_baixo_estoque = [
-        p for p in produtos if p.quantidade_estoque < p.estoque_minimo
-    ]
+    produtos_baixo_estoque = [p for p in produtos if p.esta_com_baixo_estoque]
     return [_para_leitura(produto, session) for produto in produtos_baixo_estoque]
 
 
@@ -127,13 +125,21 @@ def atualizar_produto(
     if not categoria:
         raise HTTPException(status_code=400, detail="Categoria informada não existe.")
 
+    # estoque_minimo e fornecedor_ids têm valor padrão no schema, então um
+    # corpo de requisição que omita esses campos ainda passaria na validação
+    # com [] / 10 — só tocamos nesses campos quando o cliente realmente os
+    # enviou (model_fields_set), pra não apagar dado existente silenciosamente.
+    campos_enviados = dados.model_fields_set
+
     produto.nome = dados.nome
     produto.preco = dados.preco
     produto.categoria_id = dados.categoria_id
-    produto.estoque_minimo = dados.estoque_minimo
+    if "estoque_minimo" in campos_enviados:
+        produto.estoque_minimo = dados.estoque_minimo
     session.add(produto)
 
-    _sincronizar_fornecedores(produto.id, dados.fornecedor_ids, session)
+    if "fornecedor_ids" in campos_enviados:
+        _sincronizar_fornecedores(produto.id, dados.fornecedor_ids, session)
 
     session.commit()
     session.refresh(produto)

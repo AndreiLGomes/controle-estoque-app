@@ -17,9 +17,7 @@ def resumo(session: Session = Depends(get_session)):
     return ResumoDashboard(
         total_produtos=len(produtos),
         total_itens_estoque=sum(p.quantidade_estoque for p in produtos),
-        produtos_baixo_estoque=sum(
-            1 for p in produtos if p.quantidade_estoque < p.estoque_minimo
-        ),
+        produtos_baixo_estoque=sum(1 for p in produtos if p.esta_com_baixo_estoque),
     )
 
 
