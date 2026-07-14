@@ -5,6 +5,7 @@ from sqlmodel import Session, select
 
 from app.database import get_session
 from app.models import Categoria, Fornecedor, Movimentacao, Produto, ProdutoFornecedor
+from app.schemas.movimentacao import MovimentacaoLeitura
 from app.schemas.produto import ProdutoCreate, ProdutoLeitura, ProdutoUpdate
 
 router = APIRouter(prefix="/produtos", tags=["produtos"])
@@ -163,3 +164,17 @@ def excluir_produto(produto_id: int, session: Session = Depends(get_session)):
 
     session.delete(produto)
     session.commit()
+
+
+@router.get("/{produto_id}/movimentacoes", response_model=list[MovimentacaoLeitura])
+def historico_produto(produto_id: int, session: Session = Depends(get_session)):
+    produto = session.get(Produto, produto_id)
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    movimentacoes = session.exec(
+        select(Movimentacao)
+        .where(Movimentacao.produto_id == produto_id)
+        .order_by(Movimentacao.data.desc())
+    ).all()
+    return movimentacoes
