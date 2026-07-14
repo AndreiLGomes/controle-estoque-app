@@ -61,6 +61,19 @@ VINCULOS_EXTRAS = {
     "Café 500g": ["Limpa Tudo Suprimentos"],
 }
 
+# VINCULOS_EXTRAS.get(nome, []) falha silenciosamente se a chave não bater
+# com nenhum produto (a maioria dos produtos não tem entrada aqui de
+# propósito, então não dá pra usar indexação direta) — essa checagem falha
+# alto, no import do módulo, se um nome de produto em VINCULOS_EXTRAS ficar
+# desalinhado de PRODUTOS no futuro (ex: por uma renomeação esquecida).
+_nomes_produtos = {nome for nome, *_ in PRODUTOS}
+_nomes_invalidos_em_vinculos_extras = set(VINCULOS_EXTRAS) - _nomes_produtos
+if _nomes_invalidos_em_vinculos_extras:
+    raise ValueError(
+        "VINCULOS_EXTRAS referencia produto(s) que não existem em PRODUTOS: "
+        f"{_nomes_invalidos_em_vinculos_extras}"
+    )
+
 
 def seed_data() -> None:
     with Session(engine) as session:

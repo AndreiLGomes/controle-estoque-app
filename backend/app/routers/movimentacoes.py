@@ -18,7 +18,7 @@ def registrar_movimentacao(
         raise HTTPException(status_code=404, detail="Produto não encontrado")
 
     if dados.tipo == TipoMovimentacao.ENTRADA:
-        session.execute(
+        resultado = session.execute(
             update(Produto)
             .where(Produto.id == dados.produto_id)
             .values(quantidade_estoque=Produto.quantidade_estoque + dados.quantidade)
@@ -37,14 +37,23 @@ def registrar_movimentacao(
             )
             .values(quantidade_estoque=Produto.quantidade_estoque - dados.quantidade)
         )
-        if resultado.rowcount == 0:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"Estoque insuficiente: quantidade disponível é "
-                    f"{produto.quantidade_estoque}, foi solicitada saída de {dados.quantidade}."
-                ),
-            )
+
+    if resultado.rowcount == 0:
+        # 0 linhas afetadas: ou o produto foi excluído por outra requisição
+        # entre a checagem acima e este UPDATE (vale pra entrada e saída), ou
+        # (só possível na saída) o estoque ficou insuficiente nesse meio-tempo.
+        # Reconferimos o produto pra responder com a causa certa, em vez de
+        # presumir sempre "estoque insuficiente" mesmo quando ele já não existe.
+        produto_atual = session.get(Produto, dados.produto_id)
+        if not produto_atual:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Estoque insuficiente: quantidade disponível é "
+                f"{produto_atual.quantidade_estoque}, foi solicitada saída de {dados.quantidade}."
+            ),
+        )
 
     movimentacao = Movimentacao(
         produto_id=dados.produto_id,
