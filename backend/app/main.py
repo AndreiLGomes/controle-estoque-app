@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import create_db_and_tables
+from app.seed import seed_data
 
 app = FastAPI(title="Controle de Estoque API")
 
@@ -22,6 +23,7 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+    seed_data()
 
 
 @app.get("/health")
