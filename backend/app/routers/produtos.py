@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
 from app.database import get_session
-from app.models import Categoria, Fornecedor, Produto, ProdutoFornecedor
+from app.models import Categoria, Fornecedor, Movimentacao, Produto, ProdutoFornecedor
 from app.schemas.produto import ProdutoCreate, ProdutoLeitura, ProdutoUpdate
 
 router = APIRouter(prefix="/produtos", tags=["produtos"])
@@ -135,3 +135,31 @@ def atualizar_produto(
     session.commit()
     session.refresh(produto)
     return _para_leitura(produto, session)
+
+
+@router.delete("/{produto_id}", status_code=204)
+def excluir_produto(produto_id: int, session: Session = Depends(get_session)):
+    produto = session.get(Produto, produto_id)
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    movimentacoes = session.exec(
+        select(Movimentacao).where(Movimentacao.produto_id == produto_id)
+    ).all()
+    if movimentacoes:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Não é possível excluir este produto: existem "
+                f"{len(movimentacoes)} movimentação(ões) registrada(s) em seu histórico."
+            ),
+        )
+
+    vinculos = session.exec(
+        select(ProdutoFornecedor).where(ProdutoFornecedor.produto_id == produto_id)
+    ).all()
+    for vinculo in vinculos:
+        session.delete(vinculo)
+
+    session.delete(produto)
+    session.commit()
