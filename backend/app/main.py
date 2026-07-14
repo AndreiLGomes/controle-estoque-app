@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,7 +11,15 @@ from app.routers.fornecedores import router as fornecedores_router
 from app.routers.movimentacoes import router as movimentacoes_router
 from app.routers.produtos import router as produtos_router
 
-app = FastAPI(title="Controle de Estoque API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    seed_data()
+    yield
+
+
+app = FastAPI(title="Controle de Estoque API", lifespan=lifespan)
 
 origins = [
     "http://localhost:4200",
@@ -29,12 +39,6 @@ app.include_router(dashboard_router)
 app.include_router(fornecedores_router)
 app.include_router(produtos_router)
 app.include_router(movimentacoes_router)
-
-
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
-    seed_data()
 
 
 @app.get("/health")

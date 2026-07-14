@@ -29,7 +29,9 @@ def _para_leitura(produto: Produto, session: Session) -> ProdutoLeitura:
 def _sincronizar_fornecedores(
     produto_id: int, fornecedor_ids: list[int], session: Session
 ) -> None:
-    for fornecedor_id in fornecedor_ids:
+    fornecedor_ids_unicos = list(dict.fromkeys(fornecedor_ids))
+
+    for fornecedor_id in fornecedor_ids_unicos:
         fornecedor = session.get(Fornecedor, fornecedor_id)
         if not fornecedor:
             raise HTTPException(
@@ -43,7 +45,7 @@ def _sincronizar_fornecedores(
     for vinculo in vinculos_atuais:
         session.delete(vinculo)
 
-    for fornecedor_id in fornecedor_ids:
+    for fornecedor_id in fornecedor_ids_unicos:
         session.add(ProdutoFornecedor(produto_id=produto_id, fornecedor_id=fornecedor_id))
 
 
