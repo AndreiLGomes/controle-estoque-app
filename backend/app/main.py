@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import create_db_and_tables
 from app.seed import seed_data
 from app.routers.categorias import router as categorias_router
+from app.routers.fornecedores import router as fornecedores_router
 
 app = FastAPI(title="Controle de Estoque API")
 
@@ -21,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(categorias_router)
+app.include_router(fornecedores_router)
 
 
 @app.on_event("startup")
