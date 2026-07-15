@@ -31,4 +31,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/produtos/produto-historico').then((m) => m.ProdutoHistorico),
   },
+  {
+    path: 'movimentacoes/nova',
+    loadComponent: () =>
+      import('./features/movimentacoes/movimentacao-form').then((m) => m.MovimentacaoForm),
+  },
 ];
