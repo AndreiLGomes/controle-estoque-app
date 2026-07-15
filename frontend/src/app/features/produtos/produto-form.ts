@@ -1,18 +1,26 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { HttpActivityService } from '../../core/http-activity.service';
 import { CategoriaService } from '../categorias/categoria.service';
 import { FornecedorService } from '../fornecedores/fornecedor.service';
+import { EstadoCarregando } from '../../shared/estado-carregando/estado-carregando';
+import { EstadoErro } from '../../shared/estado-erro/estado-erro';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ProdutoService } from './produto.service';
 
 @Component({
   selector: 'app-produto-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, EstadoCarregando, EstadoErro],
   template: `
+    @if (carregando()) {
+      <app-estado-carregando />
+    } @else if (erro()) {
+      <app-estado-erro [mensagem]="erro()!" (tentarNovamente)="carregarDados()" />
+    } @else {
+
     <h1 class="text-2xl font-semibold mb-6">{{ produtoId === null ? 'Novo produto' : 'Editar produto' }}</h1>
 
     <form [formGroup]="formulario" (ngSubmit)="salvar()" class="bg-white rounded-lg p-6 max-w-xl flex flex-col gap-4">
@@ -88,6 +96,7 @@ import { ProdutoService } from './produto.service';
         </button>
       </div>
     </form>
+    }
   `,
 })
 export class ProdutoForm implements OnInit {
@@ -103,6 +112,9 @@ export class ProdutoForm implements OnInit {
   produtoId: number | null = null;
   readonly fornecedoresSelecionados = new Set<number>();
 
+  readonly carregando = signal(true);
+  readonly erro = signal<string | null>(null);
+
   readonly formulario = this.formBuilder.nonNullable.group({
     nome: ['', Validators.required],
     preco: [0, [Validators.required, Validators.min(0.01)]],
@@ -111,22 +123,38 @@ export class ProdutoForm implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    await this.categoriaService.carregar();
-    await this.fornecedorService.carregar();
+    await this.carregarDados();
+  }
 
-    const idParam = this.route.snapshot.paramMap.get('id');
-    if (idParam) {
-      this.produtoId = Number(idParam);
-      const produto = await this.produtoService.obterPorId(this.produtoId);
-      this.formulario.patchValue({
-        nome: produto.nome,
-        preco: produto.preco,
-        categoria_id: produto.categoria_id,
-        estoque_minimo: produto.estoque_minimo,
-      });
-      for (const fornecedorId of produto.fornecedor_ids) {
-        this.fornecedoresSelecionados.add(fornecedorId);
+  async carregarDados(): Promise<void> {
+    this.carregando.set(true);
+    this.erro.set(null);
+    try {
+      await this.categoriaService.carregar();
+      await this.fornecedorService.carregar();
+
+      const idParam = this.route.snapshot.paramMap.get('id');
+      if (idParam) {
+        this.produtoId = Number(idParam);
+        const produto = await this.produtoService.obterPorId(this.produtoId);
+        this.formulario.patchValue({
+          nome: produto.nome,
+          preco: produto.preco,
+          categoria_id: produto.categoria_id,
+          estoque_minimo: produto.estoque_minimo,
+        });
+        this.fornecedoresSelecionados.clear();
+        for (const fornecedorId of produto.fornecedor_ids) {
+          this.fornecedoresSelecionados.add(fornecedorId);
+        }
       }
+    } catch {
+      // Cobre tanto falha de rede quanto produto/id inexistente (ex: link
+      // "Editar" para um produto já excluído por outra aba) — sem isso, o
+      // formulário ficaria em branco sem nenhum aviso pro usuário.
+      this.erro.set('Não foi possível carregar os dados. Tente novamente em alguns instantes.');
+    } finally {
+      this.carregando.set(false);
     }
   }
 

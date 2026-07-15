@@ -18,11 +18,23 @@ import { FornecedorService } from './fornecedor.service';
     <form (ngSubmit)="salvar()" class="bg-white rounded-lg p-4 mb-6 flex gap-3 items-end max-w-xl">
       <div class="flex-1">
         <label class="block text-sm text-gray-600 mb-1">Nome</label>
-        <input type="text" [(ngModel)]="nomeFormulario" name="nome" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+        <input
+          type="text"
+          [(ngModel)]="nomeFormulario"
+          name="nome"
+          [disabled]="atividade.emAndamento()"
+          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:opacity-50"
+        />
       </div>
       <div class="flex-1">
         <label class="block text-sm text-gray-600 mb-1">Contato</label>
-        <input type="text" [(ngModel)]="contatoFormulario" name="contato" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+        <input
+          type="text"
+          [(ngModel)]="contatoFormulario"
+          name="contato"
+          [disabled]="atividade.emAndamento()"
+          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:opacity-50"
+        />
       </div>
       <button
         type="submit"
@@ -96,6 +108,9 @@ export class FornecedoresPage implements OnInit {
   }
 
   async salvar(): Promise<void> {
+    if (this.atividade.emAndamento()) {
+      return; // evita disparo duplicado (ex: Enter apertado duas vezes rápido num campo)
+    }
     const nome = this.nomeFormulario().trim();
     const contato = this.contatoFormulario().trim();
     if (!nome || !contato) {

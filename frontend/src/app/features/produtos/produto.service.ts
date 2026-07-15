@@ -22,7 +22,13 @@ export class ProdutoService {
   readonly carregando = signal(false);
   readonly erro = signal<string | null>(null);
 
+  // Incrementado a cada chamada de carregar() — permite descartar a resposta
+  // de uma requisição antiga que chega depois de uma mais recente (ex: o
+  // usuário troca o filtro rápido antes da primeira busca responder).
+  private ultimaRequisicaoId = 0;
+
   async carregar(filtros?: ProdutoFiltros): Promise<void> {
+    const idRequisicaoAtual = ++this.ultimaRequisicaoId;
     this.carregando.set(true);
     this.erro.set(null);
     try {
@@ -39,11 +45,19 @@ export class ProdutoService {
       const produtos = await firstValueFrom(
         this.http.get<Produto[]>(this.baseUrl, { params }),
       );
+      if (idRequisicaoAtual !== this.ultimaRequisicaoId) {
+        return; // uma requisição mais nova já foi disparada — descarta esta resposta desatualizada
+      }
       this.dados.set(produtos);
     } catch {
+      if (idRequisicaoAtual !== this.ultimaRequisicaoId) {
+        return;
+      }
       this.erro.set('Não foi possível carregar os dados. Tente novamente em alguns instantes.');
     } finally {
-      this.carregando.set(false);
+      if (idRequisicaoAtual === this.ultimaRequisicaoId) {
+        this.carregando.set(false);
+      }
     }
   }
 

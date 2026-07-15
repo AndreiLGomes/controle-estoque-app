@@ -22,7 +22,8 @@ import { CategoriaService } from './categoria.service';
           type="text"
           [(ngModel)]="nomeFormulario"
           name="nome"
-          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+          [disabled]="atividade.emAndamento()"
+          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:opacity-50"
         />
       </div>
       <button
@@ -92,6 +93,9 @@ export class CategoriasPage implements OnInit {
   }
 
   async salvar(): Promise<void> {
+    if (this.atividade.emAndamento()) {
+      return; // evita disparo duplicado (ex: Enter apertado duas vezes rápido no campo)
+    }
     const nome = this.nomeFormulario().trim();
     if (!nome) {
       return;

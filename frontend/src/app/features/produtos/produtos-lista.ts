@@ -48,8 +48,9 @@ type ColunaOrdenavel = 'nome' | 'preco' | 'quantidade_estoque';
             type="text"
             [(ngModel)]="busca"
             (keyup.enter)="recarregar()"
+            [disabled]="atividade.emAndamento()"
             placeholder="Ex: mouse"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:opacity-50"
           />
           <button
             type="button"
