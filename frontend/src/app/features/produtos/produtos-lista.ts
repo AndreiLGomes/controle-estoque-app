@@ -32,6 +32,7 @@ type ColunaOrdenavel = 'nome' | 'preco' | 'quantidade_estoque';
         <select
           [(ngModel)]="categoriaSelecionada"
           (ngModelChange)="recarregar()"
+          [disabled]="atividade.emAndamento()"
           class="border border-gray-300 rounded-md px-3 py-2 text-sm"
         >
           <option [ngValue]="undefined">Todas</option>
@@ -53,7 +54,8 @@ type ColunaOrdenavel = 'nome' | 'preco' | 'quantidade_estoque';
           <button
             type="button"
             (click)="recarregar()"
-            class="px-4 py-2 text-sm rounded-md border border-gray-300 whitespace-nowrap"
+            [disabled]="atividade.emAndamento()"
+            class="px-4 py-2 text-sm rounded-md border border-gray-300 whitespace-nowrap disabled:opacity-50"
           >
             Buscar
           </button>
@@ -69,10 +71,31 @@ type ColunaOrdenavel = 'nome' | 'preco' | 'quantidade_estoque';
       <table class="w-full bg-white rounded-lg overflow-hidden">
         <thead class="bg-gray-50 text-left text-sm text-gray-600">
           <tr>
-            <th class="px-4 py-3 cursor-pointer" (click)="ordenarPor('nome')">Nome</th>
+            <th
+              class="px-4 py-3 cursor-pointer"
+              [class.pointer-events-none]="atividade.emAndamento()"
+              [class.opacity-50]="atividade.emAndamento()"
+              (click)="ordenarPor('nome')"
+            >
+              Nome
+            </th>
             <th class="px-4 py-3">Categoria</th>
-            <th class="px-4 py-3 cursor-pointer" (click)="ordenarPor('preco')">Preço</th>
-            <th class="px-4 py-3 cursor-pointer" (click)="ordenarPor('quantidade_estoque')">Estoque</th>
+            <th
+              class="px-4 py-3 cursor-pointer"
+              [class.pointer-events-none]="atividade.emAndamento()"
+              [class.opacity-50]="atividade.emAndamento()"
+              (click)="ordenarPor('preco')"
+            >
+              Preço
+            </th>
+            <th
+              class="px-4 py-3 cursor-pointer"
+              [class.pointer-events-none]="atividade.emAndamento()"
+              [class.opacity-50]="atividade.emAndamento()"
+              (click)="ordenarPor('quantidade_estoque')"
+            >
+              Estoque
+            </th>
             <th class="px-4 py-3 text-right">Ações</th>
           </tr>
         </thead>
