@@ -47,21 +47,6 @@ export class ProdutoService {
     }
   }
 
-  async carregarBaixoEstoque(): Promise<void> {
-    this.carregando.set(true);
-    this.erro.set(null);
-    try {
-      const produtos = await firstValueFrom(
-        this.http.get<Produto[]>(`${this.baseUrl}/baixo-estoque`),
-      );
-      this.dados.set(produtos);
-    } catch {
-      this.erro.set('Não foi possível carregar os dados. Tente novamente em alguns instantes.');
-    } finally {
-      this.carregando.set(false);
-    }
-  }
-
   obterPorId(id: number): Promise<Produto> {
     return firstValueFrom(this.http.get<Produto>(`${this.baseUrl}/${id}`));
   }
