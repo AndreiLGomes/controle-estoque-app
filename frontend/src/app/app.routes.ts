@@ -6,4 +6,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/categorias/categorias-page').then((m) => m.CategoriasPage),
   },
+  {
+    path: 'fornecedores',
+    loadComponent: () =>
+      import('./features/fornecedores/fornecedores-page').then((m) => m.FornecedoresPage),
+  },
 ];
