@@ -36,4 +36,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/movimentacoes/movimentacao-form').then((m) => m.MovimentacaoForm),
   },
+  {
+    path: '',
+    loadComponent: () =>
+      import('./features/dashboard/dashboard-page').then((m) => m.DashboardPage),
+  },
 ];
