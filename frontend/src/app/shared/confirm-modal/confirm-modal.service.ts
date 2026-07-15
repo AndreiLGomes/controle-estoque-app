@@ -10,6 +10,7 @@ export class ConfirmModalService {
   readonly pedidoAtual = signal<PedidoConfirmacao | null>(null);
 
   confirmar(mensagem: string): Promise<boolean> {
+    this.pedidoAtual()?.resolver(false); // encerra pedido anterior, se houver, sem deixar a Promise pendente
     return new Promise((resolver) => {
       this.pedidoAtual.set({ mensagem, resolver });
     });
