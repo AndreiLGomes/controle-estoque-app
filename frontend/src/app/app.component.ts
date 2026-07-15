@@ -1,9 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
+import { ToastComponent } from './shared/toast/toast';
+import { ConfirmModalComponent } from './shared/confirm-modal/confirm-modal';
+
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastComponent, ConfirmModalComponent],
   template: `
     <div class="min-h-screen">
       <header class="bg-white border-b border-gray-200 px-6 py-4">
@@ -21,6 +24,8 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       <main class="max-w-6xl mx-auto px-6 py-8">
         <router-outlet />
       </main>
+      <app-toast />
+      <app-confirm-modal />
     </div>
   `,
 })
