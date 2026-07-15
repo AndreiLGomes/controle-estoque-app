@@ -2,14 +2,9 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
-    path: 'categorias',
+    path: '',
     loadComponent: () =>
-      import('./features/categorias/categorias-page').then((m) => m.CategoriasPage),
-  },
-  {
-    path: 'fornecedores',
-    loadComponent: () =>
-      import('./features/fornecedores/fornecedores-page').then((m) => m.FornecedoresPage),
+      import('./features/dashboard/dashboard-page').then((m) => m.DashboardPage),
   },
   {
     path: 'produtos',
@@ -37,8 +32,13 @@ export const routes: Routes = [
       import('./features/movimentacoes/movimentacao-form').then((m) => m.MovimentacaoForm),
   },
   {
-    path: '',
+    path: 'categorias',
     loadComponent: () =>
-      import('./features/dashboard/dashboard-page').then((m) => m.DashboardPage),
+      import('./features/categorias/categorias-page').then((m) => m.CategoriasPage),
+  },
+  {
+    path: 'fornecedores',
+    loadComponent: () =>
+      import('./features/fornecedores/fornecedores-page').then((m) => m.FornecedoresPage),
   },
 ];
