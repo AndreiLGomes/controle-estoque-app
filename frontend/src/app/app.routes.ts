@@ -16,4 +16,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/produtos/produtos-lista').then((m) => m.ProdutosLista),
   },
+  {
+    path: 'produtos/novo',
+    loadComponent: () =>
+      import('./features/produtos/produto-form').then((m) => m.ProdutoForm),
+  },
+  {
+    path: 'produtos/:id/editar',
+    loadComponent: () =>
+      import('./features/produtos/produto-form').then((m) => m.ProdutoForm),
+  },
 ];
