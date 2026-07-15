@@ -26,4 +26,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/produtos/produto-form').then((m) => m.ProdutoForm),
   },
+  {
+    path: 'produtos/:id/historico',
+    loadComponent: () =>
+      import('./features/produtos/produto-historico').then((m) => m.ProdutoHistorico),
+  },
 ];
