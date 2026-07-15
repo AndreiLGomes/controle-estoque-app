@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+:root {
+  --cor-fundo: #F6F4EE;
+  --cor-texto: #1B1E27;
+  --cor-destaque: #463AE0;
+}
+
+body {
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.fonte-dados {
+  font-family: 'JetBrains Mono', monospace;
+}
