@@ -23,7 +23,7 @@ app = FastAPI(title="Controle de Estoque API", lifespan=lifespan)
 
 origins = [
     "http://localhost:4200",
-    # Adicionar aqui o domínio da Vercel após o primeiro deploy do front-end
+    "https://controle-estoque-app-psi.vercel.app",
 ]
 
 app.add_middleware(
