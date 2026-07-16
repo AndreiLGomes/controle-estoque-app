@@ -48,11 +48,15 @@ export class ConfirmModalComponent {
   constructor() {
     effect(() => {
       if (this.confirmModalService.pedidoAtual()) {
-        // Foca o botão "Cancelar" assim que o modal aparece (depois do ciclo
-        // de renderização, daí o setTimeout) — sem isso, o Tab a partir do
-        // botão que abriu o modal segue o fluxo normal da página por trás,
-        // podendo cair em outro botão "Excluir" de outra linha da tabela.
-        setTimeout(() => this.botaoCancelar?.nativeElement.focus());
+        // Foca o botão "Cancelar" assim que o modal aparece — sem isso, o Tab
+        // a partir do botão que abriu o modal segue o fluxo normal da página
+        // por trás, podendo cair em outro botão "Excluir" de outra linha da
+        // tabela. Usa queueMicrotask (não setTimeout): uma macrotask perde a
+        // corrida para um Tab que o usuário já tenha disparado antes dela
+        // rodar, já que eventos de teclado são despachados como tasks e só
+        // entram na fila depois que todas as microtasks pendentes esvaziam —
+        // uma microtask sempre roda antes da próxima tecla ser processada.
+        queueMicrotask(() => this.botaoCancelar?.nativeElement.focus());
       }
     });
   }

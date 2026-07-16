@@ -7,6 +7,7 @@ import { CategoriaService } from '../categorias/categoria.service';
 import { FornecedorService } from '../fornecedores/fornecedor.service';
 import { EstadoCarregando } from '../../shared/estado-carregando/estado-carregando';
 import { EstadoErro } from '../../shared/estado-erro/estado-erro';
+import { GuardaExecucaoUnica } from '../../shared/guarda-execucao-unica';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ProdutoService } from './produto.service';
 
@@ -114,6 +115,7 @@ export class ProdutoForm implements OnInit {
 
   readonly carregando = signal(true);
   readonly erro = signal<string | null>(null);
+  private readonly guardaSalvar = new GuardaExecucaoUnica();
 
   readonly formulario = this.formBuilder.nonNullable.group({
     nome: ['', Validators.required],
@@ -131,7 +133,18 @@ export class ProdutoForm implements OnInit {
     this.erro.set(null);
     try {
       await this.categoriaService.carregar();
+      if (this.categoriaService.erro()) {
+        // CategoriaService/FornecedorService tratam o próprio erro
+        // internamente (setam o signal `erro` deles e não relançam), então
+        // sem esta checagem explícita esse catch nunca dispararia por causa
+        // de uma falha aqui — o formulário renderizaria normalmente com a
+        // lista vazia e sem nenhum aviso ao usuário.
+        throw new Error(this.categoriaService.erro()!);
+      }
       await this.fornecedorService.carregar();
+      if (this.fornecedorService.erro()) {
+        throw new Error(this.fornecedorService.erro()!);
+      }
 
       const idParam = this.route.snapshot.paramMap.get('id');
       if (idParam) {
@@ -171,26 +184,28 @@ export class ProdutoForm implements OnInit {
       this.formulario.markAllAsTouched();
       return;
     }
-    const valores = this.formulario.getRawValue();
-    const dto = {
-      nome: valores.nome,
-      preco: valores.preco,
-      categoria_id: valores.categoria_id!,
-      estoque_minimo: valores.estoque_minimo,
-      fornecedor_ids: Array.from(this.fornecedoresSelecionados),
-    };
-    try {
-      if (this.produtoId === null) {
-        await this.produtoService.criar(dto);
-        this.toast.sucesso('Produto salvo com sucesso.');
-      } else {
-        await this.produtoService.atualizar(this.produtoId, dto);
-        this.toast.sucesso('Produto salvo com sucesso.');
+    await this.guardaSalvar.executar(async () => {
+      const valores = this.formulario.getRawValue();
+      const dto = {
+        nome: valores.nome,
+        preco: valores.preco,
+        categoria_id: valores.categoria_id!,
+        estoque_minimo: valores.estoque_minimo,
+        fornecedor_ids: Array.from(this.fornecedoresSelecionados),
+      };
+      try {
+        if (this.produtoId === null) {
+          await this.produtoService.criar(dto);
+          this.toast.sucesso('Produto salvo com sucesso.');
+        } else {
+          await this.produtoService.atualizar(this.produtoId, dto);
+          this.toast.sucesso('Produto salvo com sucesso.');
+        }
+        this.router.navigate(['/produtos']);
+      } catch (erro: any) {
+        const mensagem = erro?.error?.detail ?? 'Não foi possível salvar o produto.';
+        this.toast.erro(typeof mensagem === 'string' ? mensagem : 'Verifique os dados informados.');
       }
-      this.router.navigate(['/produtos']);
-    } catch (erro: any) {
-      const mensagem = erro?.error?.detail ?? 'Não foi possível salvar o produto.';
-      this.toast.erro(typeof mensagem === 'string' ? mensagem : 'Verifique os dados informados.');
-    }
+    });
   }
 }

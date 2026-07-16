@@ -5,6 +5,7 @@ import { HttpActivityService } from '../../core/http-activity.service';
 import { ConfirmModalService } from '../../shared/confirm-modal/confirm-modal.service';
 import { EstadoCarregando } from '../../shared/estado-carregando/estado-carregando';
 import { EstadoErro } from '../../shared/estado-erro/estado-erro';
+import { GuardaExecucaoUnica } from '../../shared/guarda-execucao-unica';
 import { ToastService } from '../../shared/toast/toast.service';
 import { CategoriaService } from './categoria.service';
 
@@ -77,6 +78,7 @@ export class CategoriasPage implements OnInit {
 
   readonly nomeFormulario = signal('');
   readonly idEmEdicao = signal<number | null>(null);
+  private readonly guardaSalvar = new GuardaExecucaoUnica();
 
   ngOnInit(): void {
     this.categoriaService.carregar();
@@ -93,26 +95,25 @@ export class CategoriasPage implements OnInit {
   }
 
   async salvar(): Promise<void> {
-    if (this.atividade.emAndamento()) {
-      return; // evita disparo duplicado (ex: Enter apertado duas vezes rápido no campo)
-    }
     const nome = this.nomeFormulario().trim();
     if (!nome) {
       return;
     }
-    try {
-      if (this.idEmEdicao() === null) {
-        await this.categoriaService.criar(nome);
-        this.toast.sucesso('Categoria criada com sucesso.');
-      } else {
-        await this.categoriaService.atualizar(this.idEmEdicao()!, nome);
-        this.toast.sucesso('Categoria atualizada com sucesso.');
+    await this.guardaSalvar.executar(async () => {
+      try {
+        if (this.idEmEdicao() === null) {
+          await this.categoriaService.criar(nome);
+          this.toast.sucesso('Categoria criada com sucesso.');
+        } else {
+          await this.categoriaService.atualizar(this.idEmEdicao()!, nome);
+          this.toast.sucesso('Categoria atualizada com sucesso.');
+        }
+        this.cancelarEdicao();
+        await this.categoriaService.carregar();
+      } catch {
+        this.toast.erro('Não foi possível salvar a categoria. Tente novamente.');
       }
-      this.cancelarEdicao();
-      await this.categoriaService.carregar();
-    } catch {
-      this.toast.erro('Não foi possível salvar a categoria. Tente novamente.');
-    }
+    });
   }
 
   async excluir(categoria: { id: number; nome: string }): Promise<void> {

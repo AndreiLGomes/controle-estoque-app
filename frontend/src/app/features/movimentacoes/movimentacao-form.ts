@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { HttpActivityService } from '../../core/http-activity.service';
+import { GuardaExecucaoUnica } from '../../shared/guarda-execucao-unica';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ProdutoService } from '../produtos/produto.service';
 import { MovimentacaoService } from './movimentacao.service';
@@ -80,6 +81,8 @@ export class MovimentacaoForm implements OnInit {
     quantidade: [1, [Validators.required, Validators.min(1)]],
   });
 
+  private readonly guardaRegistrar = new GuardaExecucaoUnica();
+
   // FormGroup usa RxJS (valueChanges), não signals — um computed() que lê
   // this.formulario.controls.x.value diretamente não tem nenhuma dependência
   // rastreável e nunca recalcula. toSignal cria uma ponte reativa de verdade:
@@ -114,18 +117,20 @@ export class MovimentacaoForm implements OnInit {
       this.formulario.markAllAsTouched();
       return;
     }
-    const valores = this.formulario.getRawValue();
-    try {
-      await this.movimentacaoService.registrar({
-        produto_id: valores.produtoId!,
-        tipo: valores.tipo,
-        quantidade: valores.quantidade,
-      });
-      this.toast.sucesso('Movimentação registrada com sucesso.');
-      this.router.navigate(['/produtos']);
-    } catch (erro: any) {
-      const mensagem = erro?.error?.detail ?? 'Não foi possível registrar a movimentação.';
-      this.toast.erro(typeof mensagem === 'string' ? mensagem : 'Verifique os dados informados.');
-    }
+    await this.guardaRegistrar.executar(async () => {
+      const valores = this.formulario.getRawValue();
+      try {
+        await this.movimentacaoService.registrar({
+          produto_id: valores.produtoId!,
+          tipo: valores.tipo,
+          quantidade: valores.quantidade,
+        });
+        this.toast.sucesso('Movimentação registrada com sucesso.');
+        this.router.navigate(['/produtos']);
+      } catch (erro: any) {
+        const mensagem = erro?.error?.detail ?? 'Não foi possível registrar a movimentação.';
+        this.toast.erro(typeof mensagem === 'string' ? mensagem : 'Verifique os dados informados.');
+      }
+    });
   }
 }

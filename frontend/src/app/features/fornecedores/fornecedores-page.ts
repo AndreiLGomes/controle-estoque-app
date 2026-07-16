@@ -5,6 +5,7 @@ import { HttpActivityService } from '../../core/http-activity.service';
 import { ConfirmModalService } from '../../shared/confirm-modal/confirm-modal.service';
 import { EstadoCarregando } from '../../shared/estado-carregando/estado-carregando';
 import { EstadoErro } from '../../shared/estado-erro/estado-erro';
+import { GuardaExecucaoUnica } from '../../shared/guarda-execucao-unica';
 import { ToastService } from '../../shared/toast/toast.service';
 import { FornecedorService } from './fornecedor.service';
 
@@ -90,6 +91,7 @@ export class FornecedoresPage implements OnInit {
   readonly nomeFormulario = signal('');
   readonly contatoFormulario = signal('');
   readonly idEmEdicao = signal<number | null>(null);
+  private readonly guardaSalvar = new GuardaExecucaoUnica();
 
   ngOnInit(): void {
     this.fornecedorService.carregar();
@@ -108,27 +110,26 @@ export class FornecedoresPage implements OnInit {
   }
 
   async salvar(): Promise<void> {
-    if (this.atividade.emAndamento()) {
-      return; // evita disparo duplicado (ex: Enter apertado duas vezes rápido num campo)
-    }
     const nome = this.nomeFormulario().trim();
     const contato = this.contatoFormulario().trim();
     if (!nome || !contato) {
       return;
     }
-    try {
-      if (this.idEmEdicao() === null) {
-        await this.fornecedorService.criar(nome, contato);
-        this.toast.sucesso('Fornecedor criado com sucesso.');
-      } else {
-        await this.fornecedorService.atualizar(this.idEmEdicao()!, nome, contato);
-        this.toast.sucesso('Fornecedor atualizado com sucesso.');
+    await this.guardaSalvar.executar(async () => {
+      try {
+        if (this.idEmEdicao() === null) {
+          await this.fornecedorService.criar(nome, contato);
+          this.toast.sucesso('Fornecedor criado com sucesso.');
+        } else {
+          await this.fornecedorService.atualizar(this.idEmEdicao()!, nome, contato);
+          this.toast.sucesso('Fornecedor atualizado com sucesso.');
+        }
+        this.cancelarEdicao();
+        await this.fornecedorService.carregar();
+      } catch {
+        this.toast.erro('Não foi possível salvar o fornecedor. Tente novamente.');
       }
-      this.cancelarEdicao();
-      await this.fornecedorService.carregar();
-    } catch {
-      this.toast.erro('Não foi possível salvar o fornecedor. Tente novamente.');
-    }
+    });
   }
 
   async excluir(fornecedor: { id: number; nome: string }): Promise<void> {
